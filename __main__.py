@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 from itertools import zip_longest
+import time
 
 
 companies = []
@@ -12,7 +13,7 @@ prices = []
 mores = []
 page = 1
 while True:
-    html = requests.get(f'https://www.timesjobs.com/candidate/job-search.html?from=submit&actualTxtKeywords=data%20engineer&searchBy=0&rdoOperator=OR&searchType=personalizedSearch&txtLocation=morocco&luceneResultSize=25&postWeek=60&txtKeywords=data%20engineer&pDate=I&sequence={page}&startPage=1').text
+    html = requests.get(f'https://www.timesjobs.com/candidate/job-search.html?from=submit&actualTxtKeywords=Data%20Analyst&searchBy=0&rdoOperator=OR&searchType=personalizedSearch&luceneResultSize=25&postWeek=60&txtKeywords=0DQT0data%20analyst0DQT0&pDate=I&sequence={page}&startPage=1').text
     soup = BeautifulSoup(html, 'lxml')
 
     if (page > int(soup.find('span', id="totolResultCountsId").text) // 25):
@@ -21,20 +22,32 @@ while True:
 
     jobs = soup.find_all('li', class_='clearfix job-bx wht-shd-bx')
     for job in jobs:
-        company = job.find('h3', class_='joblist-comp-name').text.replace(job.find('span', class_='comp-more').text , '').strip()
-        companies.append(company)
+        company_ex = job.find('h3', class_='joblist-comp-name').text
+        try:
+            company = company_ex.replace(job.find('span', class_='comp-more').text , '').strip()
+            companies.append(company)
+
+        except AttributeError:
+            companies.append(company_ex)
         job_title = job.find('h2').find('a').text.strip()
         job_titles.append(job_title)
         skills = job.find('span', class_='srp-skills').text.strip()
         skillss.append(skills)
-        mobility = job.find('span', class_='jobs-status covid-icon clearfix').text.strip()
-        location = job.find('ul', class_='top-jd-dtl clearfix').find('span').text.strip()
+        try:
+            mobility = job.find('span', class_='jobs-status covid-icon clearfix').text.strip()
+            location = job.find('ul', class_='top-jd-dtl clearfix').find('span').text.strip()
+            ml = mobility + ' : ' + location
+            mls.append(ml)
+        except AttributeError:
+            mobility = "Not specified"
+            location = job.find('ul', class_='top-jd-dtl clearfix').find('span').text.strip()
+            ml = mobility + ' : ' + location
+            mls.append(ml)
         price = job.find('ul', class_='top-jd-dtl clearfix').findAll('li')[1].text.strip()
         prices.append(price)
         more = job.header.a['href']
         mores.append(more)
-        ml = mobility + ' : ' + location
-        mls.append(ml)
+
         '''
         print(company)
         print(job_title)
@@ -54,3 +67,5 @@ while True:
 
     page = page+1
     print("**Page switched**")
+    #time.sleep(10)
+
