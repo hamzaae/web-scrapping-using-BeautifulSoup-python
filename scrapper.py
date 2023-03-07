@@ -4,7 +4,7 @@ import csv
 from itertools import zip_longest
 import time
 
-
+#initialize colomuns
 companies = []
 job_titles = []
 skillss = []
@@ -13,14 +13,16 @@ prices = []
 mores = []
 page = 1
 while True:
+    # request the page and get html
     html = requests.get(f'https://www.timesjobs.com/candidate/job-search.html?from=submit&actualTxtKeywords=Data%20Analyst&searchBy=0&rdoOperator=OR&searchType=personalizedSearch&luceneResultSize=25&postWeek=60&txtKeywords=0DQT0data%20analyst0DQT0&pDate=I&sequence={page}&startPage=1').text
     soup = BeautifulSoup(html, 'lxml')
-
+    # go through all pages
     if (page > int(soup.find('span', id="totolResultCountsId").text) // 25):
         print("End of pages!")
         break
 
     jobs = soup.find_all('li', class_='clearfix job-bx wht-shd-bx')
+    #exceptions here are an exemple to avoid some errors
     for job in jobs:
         company_ex = job.find('h3', class_='joblist-comp-name').text
         try:
@@ -48,15 +50,7 @@ while True:
         more = job.header.a['href']
         mores.append(more)
 
-        '''
-        print(company)
-        print(job_title)
-        print(skills)
-        print(mobility + ' : ' + location)
-        print(price)
-        print(more)
-        print("------------------")
-        '''
+        # export to csv
         head = ["company", "job title", "skills", "mobility and location", "price", "more"]
         list = [companies, job_titles, skillss, mls, prices, mores]
         exported = zip_longest(*list)
@@ -64,8 +58,9 @@ while True:
             wr = csv.writer(f, delimiter=";")
             wr.writerow(head)
             wr.writerows(exported)
-
+    # switch pages
     page = page+1
     print("**Page switched**")
-    #time.sleep(10)
+    # avoid being detected
+    time.sleep(60)
 
